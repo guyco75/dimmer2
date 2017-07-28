@@ -252,21 +252,25 @@ struct light {
   }
 };
 
-static light l;
+
+#define LIGHT_ARR_SIZE (4)
+static light light_arr[LIGHT_ARR_SIZE];
 
 void setup() {
   Serial.begin(9600);
   Serial.println("--Ready--");
 
-  l.setup(5, 6, 0, 0x3ff);
-  pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);
+  light_arr[0].setup(5, 6, 0, 0x3ff);
+  light_arr[1].setup(5, 6, 0, 0x3ff);
+  light_arr[2].setup(5, 6, 0, 0x3ff);
+  light_arr[3].setup(5, 6, 0, 0x3ff);
 }
 
 void loop() {
   unsigned long m = millis();
-  l.fsm();
-  //digitalWrite(13, LOW);
+  for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
+    light_arr[i].fsm();
+  }
   while(millis() < m + LOOP_DURATION);
 }
 
