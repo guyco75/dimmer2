@@ -45,17 +45,17 @@ struct button {
   }
 
   bool read_state() {
-    bool readVal = !digitalRead(pin);
+    bool read_val = !digitalRead(pin);
 
-    if (readVal != unstable_state) {
+    if (read_val != unstable_state) {
 #ifdef DIMMER_DEBBUG
       Serial.println("unstable change");
 #endif
-      unstable_state = readVal;
+      unstable_state = read_val;
       last_change_ms = millis();
     } else {
-      if (readVal != state && (millis() - last_change_ms > debounce_interval_ms)) {
-        state = readVal;
+      if (read_val != state && (millis() - last_change_ms > debounce_interval_ms)) {
+        state = read_val;
         debounce_interval_ms = state?DEBOUNCE_INTERVAL_PRESSED_MS:DEBOUNCE_INTERVAL_UNPRESSED_MS;
 #ifdef DIMMER_DEBBUG
         Serial.print("stable change ************  ");
