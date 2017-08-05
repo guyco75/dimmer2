@@ -1,10 +1,8 @@
 
-#define DEBOUNCE_INTERVAL_UNPRESSED_MS (100)  // Unstable/debounce duration when a button is pressed
-#define DEBOUNCE_INTERVAL_PRESSED_MS (50)     // Unstable/debounce duration when a button is released
-
+#define DEBOUNCE_INTERVAL_MS (70)             // Unstable/debounce duration
 #define BTN_LONG_PRESS_THRESHOLD_MS (500)     // Below that it's considered a SHORT press; above it a LONG press
 
-#define LOOP_DURATION (40)
+#define LOOP_DURATION (10)
 
 //#define DIMMER_DEBBUG 1
 
@@ -31,7 +29,6 @@ do { \
 
 struct button {
   unsigned long last_change_ms;
-  uint16_t debounce_interval_ms;
   uint8_t pin;
   bool state;
   bool unstable_state;
@@ -40,7 +37,6 @@ struct button {
     this->pin = pin;
     pinMode(pin, INPUT_PULLUP);
     state = unstable_state = 0;
-    debounce_interval_ms = DEBOUNCE_INTERVAL_UNPRESSED_MS;
     last_change_ms = millis();
   }
 
@@ -49,14 +45,16 @@ struct button {
 
     if (read_val != unstable_state) {
 #ifdef DIMMER_DEBBUG
-      Serial.println("unstable change");
+      if (read_val == state) {
+        Serial.print("unstable change  ");
+        Serial.println(millis() - last_change_ms);
+      }
 #endif
       unstable_state = read_val;
       last_change_ms = millis();
     } else {
-      if (read_val != state && (millis() - last_change_ms > debounce_interval_ms)) {
+      if (read_val != state && (millis() - last_change_ms > DEBOUNCE_INTERVAL_MS)) {
         state = read_val;
-        debounce_interval_ms = state?DEBOUNCE_INTERVAL_PRESSED_MS:DEBOUNCE_INTERVAL_UNPRESSED_MS;
 #ifdef DIMMER_DEBBUG
         Serial.print("stable change ************  ");
         Serial.println(state?"ON":"OFF");
@@ -96,9 +94,9 @@ enum light_change_speed {
 };  
 
 static uint8_t light_change_speed_factor[LIGHT_CHANGE_MAX] = {
-  8, //LIGHT_CHANGE_VERY_SLOW
-  4, //LIGHT_CHANGE_SLOW
-  3, //LIGHT_CHANGE_FAST
+  10, //LIGHT_CHANGE_VERY_SLOW
+  6, //LIGHT_CHANGE_SLOW
+  4, //LIGHT_CHANGE_FAST
   1, //LIGHT_CHANGE_IMMEDIATE
 };
 
