@@ -185,7 +185,7 @@ struct light {
     if (dimmer_direction == DIMMER_DIR_UP) {
       if (!button_pressed_up && button_pressed_down) {
         // direction change - reset
-        dimmer_direction = DIMMER_DIR_DOWN;
+        //dimmer_direction = DIMMER_DIR_DOWN;
         change_state(LIGHT_ST_NO_ACTION);
       }
     }
@@ -193,7 +193,7 @@ struct light {
     if (dimmer_direction == DIMMER_DIR_DOWN) {
       if (!button_pressed_down && button_pressed_up) {
         // direction change - reset
-        dimmer_direction = DIMMER_DIR_UP;
+        //dimmer_direction = DIMMER_DIR_UP;
         change_state(LIGHT_ST_NO_ACTION);
       }
     }
