@@ -1,3 +1,4 @@
+#include "serial_parser.h"
 
 #define DEBOUNCE_INTERVAL_MS (70)             // Unstable/debounce duration
 #define BTN_LONG_PRESS_THRESHOLD_MS (500)     // Below that it's considered a SHORT press; above it a LONG press
@@ -253,10 +254,24 @@ struct light {
 
 #define LIGHT_ARR_SIZE (4)
 static light light_arr[LIGHT_ARR_SIZE];
+SerialParser serParser(128);
 unsigned long m;
 
+void handleSerialCmd() {
+  int dimmer, br;
+
+  dimmer = serParser.getNextToken().toInt();
+  if (dimmer < 0 || LIGHT_ARR_SIZE <= dimmer) {Serial.println("${\"status\":\"ERR dimmer\"}#");return;}
+
+  br = serParser.getNextToken().toInt();
+  if (br < 0 || 0x3ff < br) {Serial.println("${\"status\":\"ERR brightness\"}#");return;}
+
+  light_arr[dimmer].target_brightness = br;
+  light_arr[dimmer].change_state(LIGHT_ST_SHORT_PRESS);
+}
+
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(57600);
   Serial.println("--Ready--");
 
   light_arr[0].setup(5, 6, 0, 0x3ff);
@@ -271,6 +286,11 @@ void loop() {
   for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
     light_arr[i].fsm();
   }
+
+  if (serParser.processSerial()) {
+    handleSerialCmd();
+  }
+
   while(millis() - m < LOOP_DURATION);
   m = millis();
 }
