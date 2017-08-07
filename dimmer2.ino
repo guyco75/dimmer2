@@ -129,6 +129,7 @@ struct light {
     Serial.print("\t\t\t\t\t\t");
     Serial.println(b);
 #endif
+    analogWrite(9, b>>2);
     //OCR1A = b;
   }
 
@@ -278,6 +279,8 @@ void setup() {
   light_arr[1].setup(5,  6,  0, 0x3ff);
   light_arr[2].setup(7,  8,  0, 0x3ff);
   light_arr[3].setup(10, 11, 0, 0x3ff);
+
+  pinMode(9, OUTPUT);
 
   m = millis();
 }
