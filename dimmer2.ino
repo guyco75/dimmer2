@@ -274,10 +274,10 @@ void setup() {
   Serial.begin(57600);
   Serial.println("--Ready--");
 
-  light_arr[0].setup(5, 6, 0, 0x3ff);
-  light_arr[1].setup(5, 6, 0, 0x3ff);
-  light_arr[2].setup(5, 6, 0, 0x3ff);
-  light_arr[3].setup(5, 6, 0, 0x3ff);
+  light_arr[0].setup(3,  4,  0, 0x3ff);
+  light_arr[1].setup(5,  6,  0, 0x3ff);
+  light_arr[2].setup(7,  8,  0, 0x3ff);
+  light_arr[3].setup(10, 11, 0, 0x3ff);
 
   m = millis();
 }
