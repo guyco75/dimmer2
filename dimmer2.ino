@@ -85,15 +85,6 @@ struct light {
   //struct pirSensor pirSensor;
   enum dimmer_direction dimmer_direction;
 
-  void set_dimmer(int b) {
-#ifdef DIMMER_DEBBUG
-    Serial.print("\t\t\t\t\t\t");
-    Serial.println(b);
-#endif
-    analogWrite(9, b>>2);
-    //OCR1A = b;
-  }
-
   void setup(uint8_t up_pin, uint8_t down_pin, uint16_t minb, uint16_t maxb) {
     btn_up.setup(up_pin);
     btn_down.setup(down_pin);
@@ -124,7 +115,12 @@ struct light {
     } else {
       brightness = min(target_brightness, brightness + brightness_step); // going up
     }
-    set_dimmer(brightness);
+#ifdef DIMMER_DEBBUG
+    Serial.print("\t\t\t\t\t\t");
+    Serial.println(brightness);
+#endif
+    analogWrite(9, brightness>>2);
+
     return brightness == target_brightness;
   }
 
