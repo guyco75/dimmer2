@@ -227,6 +227,7 @@ void handleSerialCmd() {
   br = serParser.getNextToken().toInt();
   if (br < 0 || 0x3ff < br) {Serial.println("${\"status\":\"ERR brightness\"}#");return;}
 
+  // TODO: return (ignore) if not idle
   light_arr[dimmer].target_brightness = br;
   light_arr[dimmer].change_state(LIGHT_ST_SHORT_PRESS);
 }
