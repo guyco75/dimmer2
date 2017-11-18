@@ -124,8 +124,6 @@ void setup() {
   DDRC = 0;    // set all analog pins to INPUT
   PORTC = 0xFF; // pull up
 
-  m = millis();
-
   delay(10);       //TODO
   timer_setup();   //TODO
 
@@ -134,6 +132,7 @@ void setup() {
 #ifndef SIMULATE_ZC
   attachInterrupt(digitalPinToInterrupt(2), zero_crosss_int, RISING);
 #endif
+  m = millis();
 }
 
 #ifdef SIMULATE_ZC
