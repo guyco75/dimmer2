@@ -36,13 +36,12 @@ struct button {
 
   void setup(uint8_t pin) {
     this->pin = pin;
-    pinMode(pin, INPUT_PULLUP);
     state = unstable_state = 0;
     last_change_ms = millis();
   }
 
   bool read_state() {
-    bool read_val = !digitalRead(pin);
+    bool read_val = !(PINC & _BV(pin));
 
     if (read_val != unstable_state) {
 #ifdef DIMMER_DEBBUG
@@ -275,10 +274,13 @@ void setup() {
   Serial.begin(57600);
   Serial.println("--Ready--");
 
-  light_arr[0].setup(3,  4,  0, 0x3ff);
-  light_arr[1].setup(5,  6,  0, 0x3ff);
-  light_arr[2].setup(7,  8,  0, 0x3ff);
-  light_arr[3].setup(10, 11, 0, 0x3ff);
+  light_arr[0].setup(0, 1, 0, 0x3ff);
+  light_arr[1].setup(2, 3, 0, 0x3ff);
+  light_arr[2].setup(4, 5, 0, 0x3ff);
+  light_arr[3].setup(6, 7, 0, 0x3ff);
+
+  DDRC = 0;    // set all analog pins to INPUT
+  PORTC = 0xFF; // pull up
 
   pinMode(9, OUTPUT);
 
