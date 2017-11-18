@@ -3,11 +3,23 @@
 
 #define BTN_LONG_PRESS_THRESHOLD_MS (500)     // Below that it's considered a SHORT press; above it a LONG press
 
-#define LOOP_DURATION (10)
+#define SCALE (1)  // for debug
+#define TIMER_PERIOD (20 * SCALE) // 20us
+#define ZC_PERIOD (10000ULL * SCALE) // 10ms (2x50Hz) // TODO: move the UUL to scale (and have it UL)
+
+#define LOOP_DURATION (50) //ms
 
 //#define DIMMER_DEBBUG 1
 
 #ifdef DIMMER_DEBBUG
+
+struct statistics {
+  uint32_t last_zero_cross_delta_us;
+  uint32_t last_zero_cross_duration_us;
+  uint32_t last_timer1_overflow_delta_us;
+  uint32_t last_timer1_overflow_duration_us;
+};
+volatile statistics stat;
 
 #define assert(test, str1, str2) \
 do { \
@@ -69,9 +81,21 @@ enum dimmer_direction {
   DIMMER_DIR_MAX,
 };
 
+enum dimmer_type {
+  DIMMER_TYPE_PWM,
+  DIMMER_TYPE_TRIAC,
+  DIIMER_TYPE_MAX
+};
+
+struct light_shadow {
+  uint32_t timer_cnt_on;
+  uint32_t timer_cnt_off;
+};
+
 struct light {
   button btn_up;
   button btn_down;
+  light_shadow shadow;
 
   uint16_t brightness;
   uint16_t target_brightness;
@@ -84,14 +108,22 @@ struct light {
   //unsigned long idleTime;
   //struct pirSensor pirSensor;
   enum dimmer_direction dimmer_direction;
+  enum dimmer_type dimmer_type;
+  uint8_t light_pin;
 
-  void setup(uint8_t up_pin, uint8_t down_pin, uint16_t minb, uint16_t maxb) {
+  void setup(uint8_t up_pin, uint8_t down_pin, uint8_t l_pin, uint16_t minb, uint16_t maxb, enum dimmer_type d_type) {
     btn_up.setup(up_pin);
     btn_down.setup(down_pin);
     min_brightness = minb;
     max_brightness = maxb;
+    dimmer_type = d_type;
+    light_pin = l_pin;
+    pinMode(light_pin, OUTPUT);
 
     dimmer_direction = DIMMER_DIR_NONE;
+    brightness = min_brightness;
+    shadow.timer_cnt_on = 0;
+    shadow.timer_cnt_off = 0;
   }
 
   void change_state(enum light_state st) {
@@ -110,6 +142,15 @@ struct light {
 
   //return true if we're done
   bool step_to_target_brightness(enum light_change_speed s) {
+    switch (dimmer_type) {
+      case DIMMER_TYPE_PWM:   return step_to_target_brightness_pwm(s);
+      case DIMMER_TYPE_TRIAC: return step_to_target_brightness_triac(s);
+      default: assert(false, "invalid dimmer type", dimmer_type);
+    }
+    return true;
+  }
+
+  bool step_to_target_brightness_pwm(enum light_change_speed s) {
     uint8_t speed_factor = light_change_speed_factor[s];
     uint16_t brightness_step = (brightness>>speed_factor) + 1;
     
@@ -124,6 +165,24 @@ struct light {
 #endif
     analogWrite(9, brightness>>2);
 
+    return brightness == target_brightness;
+  }
+
+  //return true if we're done
+  bool step_to_target_brightness_triac(enum light_change_speed s) {
+    uint16_t brightness_step = (s+1)*3-2;//TODO
+
+    if (brightness > target_brightness) {
+      brightness = max(target_brightness, brightness - brightness_step); // going down
+    } else {
+      brightness = min(target_brightness, brightness + brightness_step); // going up
+    }
+/*#ifdef DIMMER_DEBBUG
+    Serial.print("\t\t\t\t\t\t");
+    Serial.print(id);
+    Serial.print("   ");
+    Serial.println(brightness);
+#endif*/
     return brightness == target_brightness;
   }
 
@@ -212,9 +271,77 @@ struct light {
   }
 };
 
-
-#define LIGHT_ARR_SIZE (4)
+#define LIGHT_ARR_SIZE (1)
 static light light_arr[LIGHT_ARR_SIZE];
+
+/*****************************************/
+
+volatile uint32_t timer_cnt = 0;
+void timer_setup(uint8_t zc_pin) {
+  TCCR1B = _BV(WGM13);        // set mode as phase and frequency correct pwm, stop the timer
+  TCCR1A = 0;                 // clear control register A 
+  ICR1 = (F_CPU / 2000000) * TIMER_PERIOD;
+  TIMSK1 = _BV(TOIE1);
+
+  // must be pings 2 or 3
+  pinMode(zc_pin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(zc_pin), zero_crosss_int, RISING);
+}
+
+void zero_crosss_int() {
+#ifdef DIMMER_DEBBUG
+  static uint32_t last_zc = 0;
+  uint32_t cur_zc = TCNT0;
+#endif
+
+  PORTD = 0; // clear all light control output pins
+
+  for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
+    light *l = &light_arr[i];
+
+    //CSRdigitalWrite(l->light_pin, LOW);
+
+    if (l->brightness == l->min_brightness) {
+      l->shadow.timer_cnt_on = 0;
+      l->shadow.timer_cnt_off = 0;
+    } else {
+      l->shadow.timer_cnt_on = l->brightness;
+      l->shadow.timer_cnt_off = (l->dimmer_type == DIMMER_TYPE_TRIAC) ? l->brightness+5 : 0;
+    }
+  }
+
+  timer_cnt = 0;
+  TCNT1 = 1; // 0 will cause an immediate interrupt. Skip the first cycle (AC is anyway low for a while)
+  TCCR1B = _BV(WGM13) | _BV(CS10); // enable the timer (highest resolution)
+
+#ifdef DIMMER_DEBBUG
+  stat.last_zero_cross_duration_us = TCNT0 - cur_zc;
+  stat.last_zero_cross_delta_us = cur_zc - last_zc;
+  last_zc = cur_zc;
+#endif
+}
+
+ISR(TIMER1_OVF_vect) {
+  if (timer_cnt == 0) // skip the first cycle (it may be a late/shorter one)
+    goto out;         // NOTE: the code below assumes that timer_cnt is not zero!
+
+  for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
+    light *l = &light_arr[i];
+    if (timer_cnt == l->shadow.timer_cnt_on) {
+      //CSRdigitalWrite(l->light_pin, HIGH);
+      PORTD |= _BV(3);
+    }
+    if (timer_cnt == l->shadow.timer_cnt_off) {
+      //CSRdigitalWrite(l->light_pin, LOW);
+      PORTD &= ~_BV(3);
+    }
+  }
+out:
+  timer_cnt++;
+}
+
+/*****************************************/
+
 SerialParser serParser(128);
 
 void handleSerialCmd() {
@@ -236,17 +363,23 @@ void setup() {
   Serial.begin(57600);
   Serial.println("--Ready--");
 
-  light_arr[0].setup(0, 1, 0, 0x3ff);
-  light_arr[1].setup(2, 3, 0, 0x3ff);
-  light_arr[2].setup(4, 5, 0, 0x3ff);
-  light_arr[3].setup(6, 7, 0, 0x3ff);
+  light_arr[0].setup(0, 1, 3, 450, 20,   DIMMER_TYPE_TRIAC);
+/*
+  light_arr[1].setup(2, 3, 4, 800, 100,   DIMMER_TYPE_TRIAC);
+  light_arr[2].setup(4, 5, 5, 0,   0x3ff, DIMMER_TYPE_PWM);
+  light_arr[3].setup(6, 7, 6, 0,   0x3ff, DIMMER_TYPE_PWM);
+*/
+#ifdef DIMMER_DEBBUG
+  memset((void *)&stat, 0, sizeof(stat));
+#endif
 
   DDRC = 0;    // set all analog pins to INPUT
   PORTC = 0xFF; // pull up
 
-  pinMode(9, OUTPUT);
-
   m = millis();
+
+  delay(10);       //TODO
+  timer_setup(2);  //TODO
 }
 
 void loop() {
