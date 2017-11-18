@@ -25,15 +25,11 @@ volatile statistics stat;
 /*****************************************/
 
 volatile uint32_t timer_cnt = 0;
-void timer_setup(uint8_t zc_pin) {
+void timer_setup() {
   TCCR1B = _BV(WGM13);        // set mode as phase and frequency correct pwm, stop the timer
   TCCR1A = 0;                 // clear control register A 
   ICR1 = (F_CPU / 2000000) * TIMER_PERIOD;
   TIMSK1 = _BV(TOIE1);
-
-  // must be pings 2 or 3
-  pinMode(zc_pin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(zc_pin), zero_crosss_int, RISING);
 }
 
 void zero_crosss_int() {
@@ -132,7 +128,11 @@ void setup() {
   m = millis();
 
   delay(10);       //TODO
-  timer_setup(2);  //TODO
+  timer_setup();   //TODO
+
+  // must be pings 2 or 3
+  pinMode(2, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(2), zero_crosss_int, RISING);
 }
 
 void loop() {
