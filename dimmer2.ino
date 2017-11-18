@@ -103,6 +103,9 @@ struct light {
     Serial.println(button_state_names[st]);
 #endif
     state = st;
+    if (state == LIGHT_ST_NO_ACTION) {
+      dimmer_direction = DIMMER_DIR_NONE;
+    }
   }
 
   //return true if we're done
