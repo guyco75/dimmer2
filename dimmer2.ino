@@ -24,11 +24,12 @@ volatile statistics stat;
 /*****************************************/
 
 volatile uint32_t timer_cnt = 0;
+
 void timer_setup() {
-  TCCR1B = _BV(WGM13);        // set mode as phase and frequency correct pwm, stop the timer
+  TCCR1B = _BV(WGM13) | _BV(CS10); // enable the timer (highest resolution)
   TCCR1A = 0;                 // clear control register A 
   ICR1 = (F_CPU / 2000000) * TIMER_PERIOD;
-  TIMSK1 = _BV(TOIE1);
+  TIMSK1 = 0;                 // keep the interrupt disabled
 }
 
 void zero_crosss_int() {
@@ -40,7 +41,7 @@ void zero_crosss_int() {
   PORTD = 0; // clear all light control output pins
   timer_cnt = 0;
   TCNT1 = 1; // 0 will cause an immediate interrupt. Skip the first cycle (AC is anyway low for a while)
-  TCCR1B = _BV(WGM13) | _BV(CS10); // enable the timer (highest resolution)
+  TIMSK1 = _BV(TOIE1);             // enable the interrupt
 
 #ifdef DIMMER_DEBBUG
   stat.last_zero_cross_duration_us = TCNT0 - cur_zc;
