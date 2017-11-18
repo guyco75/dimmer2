@@ -53,15 +53,13 @@ enum light_change_speed {
   LIGHT_CHANGE_VERY_SLOW,
   LIGHT_CHANGE_SLOW,
   LIGHT_CHANGE_FAST,
-  LIGHT_CHANGE_IMMEDIATE,
   LIGHT_CHANGE_MAX
 };  
 
-static uint8_t light_change_speed_factor[LIGHT_CHANGE_MAX] = {
+static uint8_t light_change_speed_factor[] = {
   10, //LIGHT_CHANGE_VERY_SLOW
   6, //LIGHT_CHANGE_SLOW
   4, //LIGHT_CHANGE_FAST
-  1, //LIGHT_CHANGE_IMMEDIATE
 };
 
 enum dimmer_direction {
