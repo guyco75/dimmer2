@@ -1,3 +1,6 @@
+//#define DIMMER_DEBBUG 1
+//#define SIMULATE_ZC
+
 #include "serial_parser.h"
 #include "button.h"
 #include "dimmer.h"
@@ -5,10 +8,6 @@
 #define SCALE (1)  // for debug
 #define TIMER_PERIOD (20 * SCALE) // 20us
 #define ZC_PERIOD (10000ULL * SCALE) // 10ms (2x50Hz) // TODO: move the UUL to scale (and have it UL)
-
-#define LOOP_DURATION (50) //ms
-
-//#define DIMMER_DEBBUG 1
 
 #ifdef DIMMER_DEBBUG
 
@@ -132,8 +131,16 @@ void setup() {
 
   // must be pings 2 or 3
   pinMode(2, INPUT_PULLUP);
+#ifndef SIMULATE_ZC
   attachInterrupt(digitalPinToInterrupt(2), zero_crosss_int, RISING);
+#endif
 }
+
+#ifdef SIMULATE_ZC
+  #define LOOP_DURATION (10) //ms
+#else
+  #define LOOP_DURATION (100) //ms
+#endif
 
 void loop() {
 
@@ -141,6 +148,9 @@ void loop() {
     handleSerialCmd();
   }
 
+#ifdef SIMULATE_ZC
+  zero_crosss_int();
+#endif
   while(millis() - m < LOOP_DURATION);
   m = millis();
 }
