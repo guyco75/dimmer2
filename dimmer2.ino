@@ -76,11 +76,9 @@ ISR(TIMER1_OVF_vect) {
   for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
     light *l = &light_arr[i];
     if (timer_cnt == l->shadow.timer_cnt_on) {
-      //CSRdigitalWrite(l->light_pin, HIGH);
       PORTD |= _BV(3);
     }
     if (timer_cnt == l->shadow.timer_cnt_off) {
-      //CSRdigitalWrite(l->light_pin, LOW);
       PORTD &= ~_BV(3);
     }
   }
