@@ -43,21 +43,6 @@ void zero_crosss_int() {
 #endif
 
   PORTD = 0; // clear all light control output pins
-
-  for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
-    light *l = &light_arr[i];
-
-    //CSRdigitalWrite(l->light_pin, LOW);
-
-    if (l->brightness == l->min_brightness) {
-      l->shadow.timer_cnt_on = 0;
-      l->shadow.timer_cnt_off = 0;
-    } else {
-      l->shadow.timer_cnt_on = l->brightness;
-      l->shadow.timer_cnt_off = (l->dimmer_type == DIMMER_TYPE_TRIAC) ? l->brightness+5 : 0;
-    }
-  }
-
   timer_cnt = 0;
   TCNT1 = 1; // 0 will cause an immediate interrupt. Skip the first cycle (AC is anyway low for a while)
   TCCR1B = _BV(WGM13) | _BV(CS10); // enable the timer (highest resolution)
@@ -73,6 +58,27 @@ ISR(TIMER1_OVF_vect) {
   if (timer_cnt == 0) // skip the first cycle (it may be a late/shorter one)
     goto out;         // NOTE: the code below assumes that timer_cnt is not zero!
 
+  if (timer_cnt >= 460) {
+
+    TIMSK1 = 0; // disable the timer interrupt
+
+    // prepare for next time
+    for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
+      light *l = &light_arr[i];
+      l->fsm();
+
+      //TODO: replace with on/off flag
+      if (l->brightness == l->min_brightness) {
+        l->shadow.timer_cnt_on = 0;
+        l->shadow.timer_cnt_off = 0;
+      } else {
+        l->shadow.timer_cnt_on = l->brightness;
+        l->shadow.timer_cnt_off = (l->dimmer_type == DIMMER_TYPE_TRIAC) ? l->brightness+5 : 0;
+      }
+    }
+    return;
+  }
+
   for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
     light *l = &light_arr[i];
     if (timer_cnt == l->shadow.timer_cnt_on) {
@@ -82,6 +88,7 @@ ISR(TIMER1_OVF_vect) {
       PORTD &= ~_BV(3);
     }
   }
+
 out:
   timer_cnt++;
 }
@@ -129,9 +136,6 @@ void setup() {
 }
 
 void loop() {
-  for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
-    light_arr[i].fsm();
-  }
 
   if (serParser.processSerial()) {
     handleSerialCmd();
