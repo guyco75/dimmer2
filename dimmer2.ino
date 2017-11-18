@@ -216,7 +216,6 @@ struct light {
 #define LIGHT_ARR_SIZE (4)
 static light light_arr[LIGHT_ARR_SIZE];
 SerialParser serParser(128);
-unsigned long m;
 
 void handleSerialCmd() {
   int dimmer, br;
@@ -232,6 +231,7 @@ void handleSerialCmd() {
   light_arr[dimmer].change_state(LIGHT_ST_SHORT_PRESS);
 }
 
+unsigned long m;
 void setup() {
   Serial.begin(57600);
   Serial.println("--Ready--");
