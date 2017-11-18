@@ -1,3 +1,5 @@
+#ifndef SERIAL_PARSER_H
+#define SERIAL_PARSER_H
 
 struct SerialParser {
   String rxCmdStr;
@@ -54,3 +56,6 @@ struct SerialParser {
     return false;
   }
 };
+
+#endif
+
