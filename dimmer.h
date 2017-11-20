@@ -107,53 +107,23 @@ struct light {
 
   //return true if we're done
   bool step_to_target_brightness(enum light_change_speed s) {
+    int16_t brightness_step;
     switch (dimmer_type) {
-      case DIMMER_TYPE_PWM:   return step_to_target_brightness_pwm(s);
-      case DIMMER_TYPE_TRIAC: return step_to_target_brightness_triac(s);
+      case DIMMER_TYPE_PWM:
+        brightness_step = (brightness>>light_change_speed_factor[s]) + 1;
+        break;
+      case DIMMER_TYPE_TRIAC:
+        brightness_step = (s+1)*3-2;//TODO
+        break;
       default: assert(false, "invalid dimmer type", dimmer_type);
     }
-    return true;
-  }
-
-  bool step_to_target_brightness_pwm(enum light_change_speed s) {
-    int8_t speed_factor = light_change_speed_factor[s];
-    int16_t brightness_step = (brightness>>speed_factor) + 1;
     
     if (brightness > target_brightness) {
       brightness = max(target_brightness, brightness - brightness_step); // going down
     } else {
       brightness = min(target_brightness, brightness + brightness_step); // going up
     }
-#ifdef DIMMER_DEBBUG
-    Serial.print("\t\t\t\t\t\t");
-    Serial.println(brightness);
-#endif
-    analogWrite(9, brightness>>2);
 
-    return brightness == target_brightness;
-  }
-
-  //return true if we're done
-  bool step_to_target_brightness_triac(enum light_change_speed s) {
-    int16_t brightness_step = (s+1)*3-2;//TODO
-/*    Serial.println("-");
-    Serial.println(brightness);
-    Serial.print(" --- ");
-    Serial.print(brightness_step);
-    Serial.print(" --- ");
-    Serial.println(brightness - brightness_step);*/
-
-    if (brightness > target_brightness) {
-      brightness = max(target_brightness, brightness - brightness_step); // going down
-    } else {
-      brightness = min(target_brightness, brightness + brightness_step); // going up
-    }
-/*#ifdef DIMMER_DEBBUG
-    Serial.print("\t\t\t\t\t\t");
-    Serial.print(id);
-    Serial.print("   ");
-    Serial.println(brightness);
-#endif*/
     return brightness == target_brightness;
   }
 
