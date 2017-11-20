@@ -141,7 +141,7 @@ struct light {
       return false; // nothing to do
     }
 
-    // Note: clicking a button is ignored if/while the other one is already help
+    // Note: clicking a button is ignored if/while the other one is already held
     // However we should take care of a case that the first one was released and the second one pressed (at the same time or before):
 
     if (dimmer_direction == DIMMER_DIR_UP) {
@@ -211,8 +211,6 @@ struct light {
     return true; // we're probably not idle
   }
 };
-
-/*****************************************/
 
 #endif
 
