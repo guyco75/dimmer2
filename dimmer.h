@@ -242,9 +242,6 @@ struct light {
   }
 };
 
-#define LIGHT_ARR_SIZE (1)
-static light light_arr[LIGHT_ARR_SIZE];
-
 /*****************************************/
 
 #endif

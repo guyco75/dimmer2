@@ -21,6 +21,9 @@ volatile statistics stat;
 
 #endif
 
+#define LIGHT_ARR_SIZE (1)
+static light light_arr[LIGHT_ARR_SIZE];
+
 /*****************************************/
 
 volatile uint32_t timer_cnt = 0;
