@@ -33,9 +33,9 @@ enum light_change_speed {
 };  
 
 static uint8_t light_change_speed_factor[] = {
-  10, //LIGHT_CHANGE_VERY_SLOW
-  6, //LIGHT_CHANGE_SLOW
-  4, //LIGHT_CHANGE_FAST
+  1, //LIGHT_CHANGE_VERY_SLOW
+  10, //LIGHT_CHANGE_SLOW
+  7, //LIGHT_CHANGE_FAST
 };
 
 enum dimmer_direction {
@@ -113,7 +113,7 @@ struct light {
         brightness_step = (brightness>>light_change_speed_factor[s]) + 1;
         break;
       case DIMMER_TYPE_TRIAC:
-        brightness_step = (s+1)*3-2;//TODO
+        brightness_step = ((460-brightness)>>light_change_speed_factor[s]) + 1;
         break;
       default: assert(false, "invalid dimmer type", dimmer_type);
     }

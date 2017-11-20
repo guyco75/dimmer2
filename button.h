@@ -1,7 +1,7 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
-#define DEBOUNCE_INTERVAL_MS (70)             // Unstable/debounce duration
+#define DEBOUNCE_INTERVAL_MS (40)             // Unstable/debounce duration
 
 struct button {
   unsigned long last_change_ms;
