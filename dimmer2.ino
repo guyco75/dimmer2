@@ -102,13 +102,14 @@ void handleSerialCmd() {
   dimmer = serParser.getNextToken().toInt();
   if (dimmer < 0 || LIGHT_ARR_SIZE <= dimmer) {Serial.println("${\"status\":\"ERR dimmer\"}#");return;}
 
+  light *l = &light_arr[dimmer];
+
   br = serParser.getNextToken().toInt();
-  // TODO: check against the proper min/max
-  if (br < 0 || 0x3ff < br) {Serial.println("${\"status\":\"ERR brightness\"}#");return;}
+  if (br < l->max_brightness || l->min_brightness < br) {Serial.println("${\"status\":\"ERR brightness\"}#");return;}
 
   // TODO: disable interrupts
-  light_arr[dimmer].target_brightness = br;
-  light_arr[dimmer].change_state(LIGHT_ST_SHORT_PRESS);
+  l->target_brightness = br;
+  l->change_state(LIGHT_ST_SHORT_PRESS);
 }
 
 unsigned long m;
