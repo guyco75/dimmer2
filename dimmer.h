@@ -73,16 +73,17 @@ struct light {
   //struct pirSensor pirSensor;
   enum dimmer_direction dimmer_direction;
   enum dimmer_type dimmer_type;
-  uint8_t light_pin;
+  volatile uint8_t *light_port;
+  uint8_t light_port_bit;
 
-  void setup(uint8_t up_pin, uint8_t down_pin, uint8_t l_pin, uint16_t minb, uint16_t maxb, enum dimmer_type d_type) {
+  void setup(uint8_t up_pin, uint8_t down_pin, volatile uint8_t *l_port, uint8_t l_port_bit, uint16_t minb, uint16_t maxb, enum dimmer_type d_type) {
     btn_up.setup(up_pin);
     btn_down.setup(down_pin);
     min_brightness = minb;
     max_brightness = maxb;
     dimmer_type = d_type;
-    light_pin = l_pin;
-    pinMode(light_pin, OUTPUT);
+    light_port = l_port;
+    light_port_bit = l_port_bit;
 
     state = LIGHT_ST_NO_ACTION;
     dimmer_direction = DIMMER_DIR_NONE;

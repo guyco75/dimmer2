@@ -41,7 +41,6 @@ void zero_crosss_int() {
   uint32_t cur_zc = TCNT0;
 #endif
 
-  PORTD = 0; // clear all light control output pins
   timer_cnt = 0;
   TCNT1 = 1; // 0 will cause an immediate interrupt. Skip the first cycle (AC is anyway low for a while)
   TIMSK1 = _BV(TOIE1);             // enable the interrupt
@@ -81,10 +80,10 @@ ISR(TIMER1_OVF_vect) {
   for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
     light *l = &light_arr[i];
     if (timer_cnt == l->shadow.timer_cnt_on) {
-      PORTD |= _BV(3);
+      *l->light_port |= l->light_port_bit;
     }
     if (timer_cnt == l->shadow.timer_cnt_off) {
-      PORTD &= ~_BV(3);
+      *l->light_port &= ~l->light_port_bit;
     }
   }
 
@@ -117,12 +116,14 @@ void setup() {
   Serial.begin(57600);
   Serial.println("--Ready--");
 
-  light_arr[0].setup(0, 1, 3, 450, 20,   DIMMER_TYPE_TRIAC);
+  light_arr[0].setup(0, 1, &PORTD, _BV(3), 450, 20,   DIMMER_TYPE_TRIAC);
 /*
   light_arr[1].setup(2, 3, 4, 800, 100,   DIMMER_TYPE_TRIAC);
   light_arr[2].setup(4, 5, 5, 0,   0x3ff, DIMMER_TYPE_PWM);
   light_arr[3].setup(6, 7, 6, 0,   0x3ff, DIMMER_TYPE_PWM);
 */
+  pinMode(3, OUTPUT);
+
 #ifdef DIMMER_DEBBUG
   memset((void *)&stat, 0, sizeof(stat));
 #endif
