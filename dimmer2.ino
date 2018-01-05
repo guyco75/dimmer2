@@ -145,11 +145,7 @@ void setup() {
   m = millis();
 }
 
-#ifdef SIMULATE_ZC
-  #define LOOP_DURATION (10) //ms
-#else
-  #define LOOP_DURATION (100) //ms
-#endif
+#define LOOP_DURATION (10) //ms
 
 static int16_t last_reported_brightness[LIGHT_ARR_SIZE] = {0};
 static char msg[50];
