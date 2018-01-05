@@ -107,7 +107,9 @@ void handleSerialCmd() {
   if (br < l->max_brightness || l->min_brightness < br) {Serial.println("${\"status\":\"ERR brightness\"}#");return;}
 
   // TODO: disable interrupts
+  // TODO: act in any state?
   l->target_brightness = br;
+  l->steady_brightness = br;
   l->change_state(LIGHT_ST_SHORT_PRESS);
 }
 
@@ -148,8 +150,10 @@ void setup() {
   #define LOOP_DURATION (100) //ms
 #endif
 
-void loop() {
+static int16_t last_reported_brightness[LIGHT_ARR_SIZE] = {0};
+static char msg[50];
 
+void loop() {
   if (serParser.processSerial()) {
     handleSerialCmd();
   }
@@ -157,6 +161,16 @@ void loop() {
 #ifdef SIMULATE_ZC
   zero_crosss_int();
 #endif
+
+  for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
+    light *l = &light_arr[i];
+    if (last_reported_brightness[i] != l->steady_brightness) {
+      last_reported_brightness[i] = l->steady_brightness;
+      snprintf (msg, 50, "$0,%d,%d,#", i, l->steady_brightness);
+      Serial.print(msg);
+    }
+  }
+
   while(millis() - m < LOOP_DURATION);
   m = millis();
 }

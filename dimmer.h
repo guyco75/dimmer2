@@ -63,7 +63,7 @@ struct light {
 
   int16_t brightness;
   int16_t target_brightness;
-  //uint16_t orig_brightness; // remember the brightness when going to IDLE (PIR)
+  int16_t steady_brightness;
   int16_t min_brightness;
   int16_t max_brightness;
   //bool turnOffWhenIdle; // will not turn on back automatically
@@ -102,6 +102,7 @@ struct light {
 #endif
     state = st;
     if (state == LIGHT_ST_NO_ACTION) {
+      steady_brightness = brightness;
       dimmer_direction = DIMMER_DIR_NONE;
     }
   }
