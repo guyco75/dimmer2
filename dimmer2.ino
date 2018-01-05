@@ -104,6 +104,7 @@ void handleSerialCmd() {
   light *l = &light_arr[dimmer];
 
   br = serParser.getNextToken().toInt();
+  br = 420 - 4*br;
   if (br < l->max_brightness || l->min_brightness < br) {Serial.println("${\"status\":\"ERR brightness\"}#");return;}
 
   // TODO: disable interrupts
@@ -165,8 +166,8 @@ void loop() {
   for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
     light *l = &light_arr[i];
     if (last_reported_brightness[i] != l->steady_brightness) {
+      snprintf (msg, 50, "$0,%d,%d,#", i, 105 - l->steady_brightness/4);
       last_reported_brightness[i] = l->steady_brightness;
-      snprintf (msg, 50, "$0,%d,%d,#", i, l->steady_brightness);
       Serial.print(msg);
     }
   }
