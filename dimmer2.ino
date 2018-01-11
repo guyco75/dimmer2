@@ -160,10 +160,11 @@ void loop() {
 #endif
 
   for (int i=0; i<LIGHT_ARR_SIZE; ++i) {
-    light *l = &light_arr[i];
-    if (last_reported_brightness[i] != l->steady_brightness) {
-      snprintf (msg, 50, "$0,%d,%d,#", i, 105 - l->steady_brightness/4);
-      last_reported_brightness[i] = l->steady_brightness;
+    int16_t steady_brightness = light_arr[i].steady_brightness;
+
+    if (last_reported_brightness[i] != steady_brightness) {
+      snprintf (msg, 50, "$0,%d,%d,#", i, 105 - steady_brightness/4);
+      last_reported_brightness[i] = steady_brightness;
       Serial.print(msg);
     }
   }
