@@ -138,7 +138,7 @@ void setup() {
   timer_setup();   //TODO
 
 #ifndef SIMULATE_ZC
-  // must be pings 2 or 3
+  // must be pins 2 or 3
   pinMode(2, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), zero_crosss_int, RISING);
 #endif
